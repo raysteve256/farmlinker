@@ -1,0 +1,52 @@
+# Farm Linker
+
+One platform for Mukono's poultry farmers — marketplace, suppliers, vets, and community — built for the AYuTe Africa Challenge Uganda 2026 (AgriTech Track, Digital market linkage, traceability & access to finance).
+
+**Live backend:** real Supabase project (Postgres + Auth + Storage), not a demo/localStorage build. Every listing, chat, vet request, and notification reads and writes to the same database.
+
+## Stack
+React 18 + Vite, Supabase (Postgres, Auth, Storage), `vite-plugin-pwa` (installable, offline-capable), Netlify-ready.
+
+## Run locally
+```bash
+npm install
+cp .env.example .env   # fill in your Supabase anon key
+npm run dev
+```
+
+## How login works right now
+There's no password or OTP yet. Tapping a demo account (or creating a new one) opens a real Supabase **anonymous auth session** and attaches it to that profile row — so every write is still attributable and enforced by Row Level Security, it's just not credential-protected. Anyone who taps "Nakato F." becomes Nakato F. for that session. This is a deliberate, documented interim step — see **Known limitations** below for what real auth would add.
+
+## Database
+Full schema — tables, RLS policies, and the storage bucket — lives in `supabase/schema.sql`. It's already applied to the live project this app points to by default. To point this app at a **different** Supabase project:
+1. Create a new project at supabase.com
+2. Run `supabase/schema.sql` in its SQL Editor
+3. Update `.env` with the new project's URL and anon key
+
+## Deploy to Netlify
+```bash
+npm run build
+```
+Build command: `npm run build`. Publish directory: `dist`. Add `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` as environment variables in Netlify's site settings (same values as your `.env`).
+
+## What's built
+- **Login** — real accounts backed by Supabase `profiles`, tap-to-login demo flow (see above)
+- **Home** — role-based quick actions (Farmer/Buyer/Supplier/Vet each see different shortcuts)
+- **Marketplace** — post/browse live birds and eggs, traceability stamp per listing
+- **Suppliers** — feed, chicks, equipment, drugs & vaccines
+- **Vets** — Farmers see their own requests; Vets see all open requests with Accept/Resolve actions
+- **Community** — Feed (posts with photo upload via Supabase Storage) and Groups (role-based: Mukono Farmers, Suppliers Network, Vets Circle, Buyers Hub)
+- **Chats** — real direct messages and group chats, persisted in Postgres, with unread counts and image sharing
+- **Notifications** — new messages and posts generate real notification rows per recipient
+- **Settings** — notification toggles, language selector (English/Luganda — UI only, not yet translated)
+
+## Known limitations (honest roadmap)
+- **No password/OTP auth yet** — see "How login works" above. Phone + OTP is the natural next step for this user base.
+- **Traceability stamp is not yet verifiable** — it's a generated code per listing, not a scannable QR tied to a public verification page.
+- **No payment/commission flow** — the business model describes Mobile Money commission collection; no checkout exists in the app yet.
+- **No search** in Marketplace/Suppliers.
+- **No content moderation or trust/ratings system** — anyone with a session can post anything.
+- **Luganda toggle is decorative** — no translations behind it yet.
+
+## Design system
+Dark ink-green (`#1B1F16`) with an egg-yolk gold accent (`#F2B705`) and a leaf-green secondary (`#4C7A3D`). Fraunces for headings, Inter for body text, IBM Plex Mono for prices and the traceability stamp — a dashed-circle "stamp" motif repeated across every listing.
