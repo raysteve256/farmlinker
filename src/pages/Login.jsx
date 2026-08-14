@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import Modal from '../components/Modal'
 import { listProfiles, claimProfile, createProfile } from '../lib/auth'
+import { requestBrowserLocation } from '../lib/geo'
 
 function initials(name) { return (name || '?').split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase() }
 const ROLE_ICON = { Farmer: '🐔', Buyer: '🛒', Supplier: '🧰', Vet: '💉' }
@@ -11,10 +12,25 @@ export default function Login({ onLoggedIn, onToast }) {
   const [modalOpen, setModalOpen] = useState(false)
   const [form, setForm] = useState({ full_name: '', role: 'Farmer', phone: '', subcounty: '' })
   const [busy, setBusy] = useState(false)
+  const [coords, setCoords] = useState(null)
+  const [locating, setLocating] = useState(false)
 
   useEffect(() => {
     listProfiles().then(setAccounts).catch(() => onToast('Could not load accounts — check your connection')).finally(() => setLoading(false))
   }, [])
+
+  async function shareLocation() {
+    try {
+      setLocating(true)
+      const pos = await requestBrowserLocation()
+      setCoords(pos)
+      onToast('Location captured')
+    } catch (e) {
+      onToast(e.message)
+    } finally {
+      setLocating(false)
+    }
+  }
 
   async function login(id) {
     try {
@@ -34,7 +50,8 @@ export default function Login({ onLoggedIn, onToast }) {
       setBusy(true)
       const profile = await createProfile({
         full_name: form.full_name.trim(), role: form.role,
-        phone: form.phone.trim() || null, subcounty: form.subcounty.trim() || 'Mukono'
+        phone: form.phone.trim() || null, subcounty: form.subcounty.trim() || 'Mukono',
+        latitude: coords?.latitude, longitude: coords?.longitude
       })
       onLoggedIn(profile)
     } catch (e) {
@@ -80,6 +97,14 @@ export default function Login({ onLoggedIn, onToast }) {
         <input value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })} placeholder="e.g. +256 7XX 000 000" />
         <label>Sub-county</label>
         <input value={form.subcounty} onChange={e => setForm({ ...form, subcounty: e.target.value })} placeholder="e.g. Goma, Mukono" />
+        <div className="attach-row">
+          <button className="attach-btn" type="button" disabled={locating} onClick={shareLocation}>
+            {coords ? '📍 Location captured' : locating ? '📍 Locating…' : '📍 Share my location'}
+          </button>
+        </div>
+        <p style={{ fontSize: 11, color: 'var(--muted)', marginTop: 6 }}>
+          Sharing your location lets other farmers, buyers and vets find you by proximity. Optional — you can skip this and add it later in Settings.
+        </p>
         <div className="modal-actions">
           <button className="btn-secondary" onClick={() => setModalOpen(false)}>Cancel</button>
           <button className="btn-primary" disabled={busy} onClick={submitNew}>{busy ? 'Creating…' : 'Create & log in'}</button>

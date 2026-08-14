@@ -18,50 +18,66 @@ export async function uploadImage(file, folder) {
 export async function getListings() {
   const { data, error } = await supabase
     .from('listings')
-    .select('*, profiles!listings_farmer_id_fkey(id, full_name)')
+    .select('*, profiles!listings_farmer_id_fkey(id, full_name, latitude, longitude)')
     .eq('status', 'active')
     .order('created_at', { ascending: false })
   if (error) throw error
-  return data.map(l => ({ ...l, farmer_name: l.profiles?.full_name || 'Farmer' }))
+  return data.map(l => ({
+    ...l,
+    farmer_name: l.profiles?.full_name || 'Farmer',
+    owner_lat: l.profiles?.latitude ?? null,
+    owner_lng: l.profiles?.longitude ?? null
+  }))
 }
 
 export async function addListing({ ownerId, type, title, quantity, price, location }) {
   const { data, error } = await supabase
     .from('listings')
     .insert({ farmer_id: ownerId, type, title, quantity, price, location, trace_stamp: traceStamp() })
-    .select('*, profiles!listings_farmer_id_fkey(id, full_name)')
+    .select('*, profiles!listings_farmer_id_fkey(id, full_name, latitude, longitude)')
     .single()
   if (error) throw error
-  return { ...data, farmer_name: data.profiles?.full_name }
+  return { ...data, farmer_name: data.profiles?.full_name, owner_lat: data.profiles?.latitude ?? null, owner_lng: data.profiles?.longitude ?? null }
 }
 
 // ---------- Suppliers ----------
 export async function getSuppliers() {
   const { data, error } = await supabase
     .from('supplier_products')
-    .select('*, profiles!supplier_products_supplier_id_fkey(id, full_name)')
+    .select('*, profiles!supplier_products_supplier_id_fkey(id, full_name, latitude, longitude)')
     .order('created_at', { ascending: false })
   if (error) throw error
-  return data.map(s => ({ ...s, supplier_name: s.profiles?.full_name || 'Supplier' }))
+  return data.map(s => ({
+    ...s,
+    supplier_name: s.profiles?.full_name || 'Supplier',
+    owner_lat: s.profiles?.latitude ?? null,
+    owner_lng: s.profiles?.longitude ?? null
+  }))
 }
 
 export async function addSupplierProduct({ ownerId, category, name, price, location }) {
   const { data, error } = await supabase
     .from('supplier_products')
     .insert({ supplier_id: ownerId, category, name, price, location })
-    .select('*, profiles!supplier_products_supplier_id_fkey(id, full_name)')
+    .select('*, profiles!supplier_products_supplier_id_fkey(id, full_name, latitude, longitude)')
     .single()
   if (error) throw error
-  return { ...data, supplier_name: data.profiles?.full_name }
+  return { ...data, supplier_name: data.profiles?.full_name, owner_lat: data.profiles?.latitude ?? null, owner_lng: data.profiles?.longitude ?? null }
 }
 
 // ---------- Vets ----------
 export async function getVets() {
   const { data, error } = await supabase
     .from('vets')
-    .select('*, profiles!vets_profile_id_fkey(id, full_name)')
+    .select('*, profiles!vets_profile_id_fkey(id, full_name, latitude, longitude)')
   if (error) throw error
-  return data.map(v => ({ ...v, name: v.profiles?.full_name || 'Vet', ownerId: v.profile_id }))
+  return data.map(v => ({
+    ...v,
+    name: v.profiles?.full_name || 'Vet',
+    ownerId: v.profile_id,
+    owner_lat: v.profiles?.latitude ?? null,
+    owner_lng: v.profiles?.longitude ?? null
+  }))
 }
 
 export async function getVetRequests() {
@@ -247,6 +263,17 @@ export async function pushNotification({ recipientId, kind, title, body, targetS
 
 export async function markNotificationRead(id) {
   await supabase.from('notifications').update({ read: true }).eq('id', id)
+}
+
+export async function updateProfileLocation(profileId, { latitude, longitude }) {
+  const { data, error } = await supabase
+    .from('profiles')
+    .update({ latitude, longitude })
+    .eq('id', profileId)
+    .select()
+    .single()
+  if (error) throw error
+  return data
 }
 
 export async function notifyRoleGroup(role, excludeProfileId, payload) {

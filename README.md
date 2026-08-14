@@ -40,6 +40,9 @@ Build command: `npm run build`. Publish directory: `dist`. Add `VITE_SUPABASE_UR
 - **Notifications** — new messages and posts generate real notification rows per recipient
 - **Settings** — notification toggles, language selector (English/Luganda — UI only, not yet translated)
 
+## Proximity search
+Profiles carry real latitude/longitude (captured via the browser's Geolocation API, with a manual "Share my location" option in Settings — never required, always opt-in). Marketplace, Suppliers, and Vets all show real distance ("2.3 km away") from the logged-in user to each listing's owner, computed client-side with the Haversine formula, and can be sorted "Nearest first". Users without a shared location simply don't see distances — nothing breaks, it degrades gracefully.
+
 ## Known limitations (honest roadmap)
 - **No password/OTP auth yet** — see "How login works" above. Phone + OTP is the natural next step for this user base.
 - **No payment/commission flow** — the business model describes Mobile Money commission collection; no checkout exists in the app yet. Needs real MTN/Airtel merchant API credentials before this can be built for real.

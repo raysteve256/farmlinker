@@ -48,11 +48,11 @@ export async function claimProfile(profileId) {
   return data
 }
 
-export async function createProfile({ full_name, role, phone, subcounty }) {
+export async function createProfile({ full_name, role, phone, subcounty, latitude, longitude }) {
   const session = await ensureSession()
   const { data, error } = await supabase
     .from('profiles')
-    .insert({ full_name, role, phone, subcounty, auth_id: session.user.id, district: 'Mukono' })
+    .insert({ full_name, role, phone, subcounty, auth_id: session.user.id, district: 'Mukono', latitude: latitude ?? null, longitude: longitude ?? null })
     .select()
     .single()
   if (error) throw error

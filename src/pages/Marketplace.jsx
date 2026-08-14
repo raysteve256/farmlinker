@@ -1,25 +1,39 @@
 import { useState } from 'react'
 import Modal from '../components/Modal'
 import TraceabilityModal from '../components/TraceabilityModal'
+import { distanceKm, fmtDistance } from '../lib/geo'
 
 function fmtUGX(n) { return 'UGX ' + Number(n).toLocaleString() }
 
 export default function Marketplace({ me, listings, onAdd, onContact, modalOpen, onCloseModal, onToast }) {
   const [filter, setFilter] = useState('all')
   const [query, setQuery] = useState('')
+  const [sortNearest, setSortNearest] = useState(true)
   const [form, setForm] = useState({ type: 'Live birds', title: '', quantity: '', price: '', location: '' })
   const [busy, setBusy] = useState(false)
   const [traceListing, setTraceListing] = useState(null)
 
+  const iHaveLocation = me.latitude != null && me.longitude != null
+
   const q = query.trim().toLowerCase()
-  const items = listings.filter(l => {
-    if (filter !== 'all' && l.type !== filter) return false
-    if (!q) return true
-    return l.title.toLowerCase().includes(q)
-      || l.location.toLowerCase().includes(q)
-      || (l.farmer_name || '').toLowerCase().includes(q)
-      || l.trace_stamp.toLowerCase().includes(q)
-  })
+  let items = listings
+    .filter(l => {
+      if (filter !== 'all' && l.type !== filter) return false
+      if (!q) return true
+      return l.title.toLowerCase().includes(q)
+        || l.location.toLowerCase().includes(q)
+        || (l.farmer_name || '').toLowerCase().includes(q)
+        || l.trace_stamp.toLowerCase().includes(q)
+    })
+    .map(l => ({ ...l, _km: iHaveLocation ? distanceKm(me.latitude, me.longitude, l.owner_lat, l.owner_lng) : null }))
+
+  if (sortNearest && iHaveLocation) {
+    items = items.slice().sort((a, b) => {
+      if (a._km === null) return 1
+      if (b._km === null) return -1
+      return a._km - b._km
+    })
+  }
 
   async function submit() {
     if (!form.title || !form.price || !form.location) { onToast('Fill in title, price and location'); return }
@@ -43,7 +57,15 @@ export default function Marketplace({ me, listings, onAdd, onContact, modalOpen,
         {['all', 'Live birds', 'Eggs'].map(f => (
           <button key={f} className={'chip' + (filter === f ? ' active' : '')} onClick={() => setFilter(f)}>{f === 'all' ? 'All' : f}</button>
         ))}
+        {iHaveLocation && (
+          <button className={'chip' + (sortNearest ? ' active' : '')} onClick={() => setSortNearest(!sortNearest)}>📍 Nearest first</button>
+        )}
       </div>
+      {!iHaveLocation && (
+        <div className="card" style={{ padding: 12, marginBottom: 14 }}>
+          <p style={{ fontSize: 12, color: 'var(--muted)' }}>Share your location in Settings to see distances and sort listings by proximity.</p>
+        </div>
+      )}
       {items.length === 0 && listings.length === 0 && <div className="empty"><span className="glyph">🐔</span><p><strong>No listings yet</strong><br />Be the first to post birds or eggs in your area.</p></div>}
       {items.length === 0 && listings.length > 0 && <div className="empty"><span className="glyph">🔍</span><p><strong>No matches</strong><br />Try a different search term or filter.</p></div>}
       {items.map(l => {
@@ -55,7 +77,7 @@ export default function Marketplace({ me, listings, onAdd, onContact, modalOpen,
               <div className="price-tag">{fmtUGX(l.price)}</div>
             </div>
             <div className="listing-row">
-              <span className="district-chip">📍 {l.location}</span>
+              <span className="district-chip">📍 {l.location}{l._km !== null && l._km !== undefined ? ` · ${fmtDistance(l._km)}` : ''}</span>
               <span className="badge trace" style={{ cursor: 'pointer' }} onClick={() => setTraceListing(l)}>◎ {l.trace_stamp} 🔍</span>
             </div>
             <div className="listing-row">

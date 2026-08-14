@@ -1,9 +1,21 @@
 import { useState } from 'react'
 import Modal from '../components/Modal'
+import { distanceKm, fmtDistance } from '../lib/geo'
 
 export default function Vets({ me, vets, vetRequests, onAdd, onContact, onAccept, onResolve, modalOpen, onCloseModal, onToast }) {
   const [form, setForm] = useState({ issue: '', urgency: 'Routine', location: '' })
   const [busy, setBusy] = useState(false)
+  const [sortNearest, setSortNearest] = useState(true)
+
+  const iHaveLocation = me.latitude != null && me.longitude != null
+  let sortedVets = vets.map(v => ({ ...v, _km: iHaveLocation ? distanceKm(me.latitude, me.longitude, v.owner_lat, v.owner_lng) : null }))
+  if (sortNearest && iHaveLocation) {
+    sortedVets = sortedVets.slice().sort((a, b) => {
+      if (a._km === null) return 1
+      if (b._km === null) return -1
+      return a._km - b._km
+    })
+  }
 
   async function submit() {
     if (!form.issue || !form.location) { onToast("Describe the issue and location"); return }
@@ -21,7 +33,17 @@ export default function Vets({ me, vets, vetRequests, onAdd, onContact, onAccept
   return (
     <div className="screen">
       <div className="section-head"><h2>{isVet ? 'Fellow vets' : 'Vets on call'}</h2><span className="count">{vets.length} nearby</span></div>
-      {vets.map(v => {
+      {iHaveLocation && (
+        <div className="chip-row">
+          <button className={'chip' + (sortNearest ? ' active' : '')} onClick={() => setSortNearest(!sortNearest)}>📍 Nearest first</button>
+        </div>
+      )}
+      {!iHaveLocation && (
+        <div className="card" style={{ padding: 12, marginBottom: 14 }}>
+          <p style={{ fontSize: 12, color: 'var(--muted)' }}>Share your location in Settings to find the nearest vet.</p>
+        </div>
+      )}
+      {sortedVets.map(v => {
         const mine = v.ownerId === me.id
         const open = v.status === 'Available'
         return (
@@ -31,7 +53,7 @@ export default function Vets({ me, vets, vetRequests, onAdd, onContact, onAccept
               <span className={'badge ' + (open ? 'open' : '')} style={!open ? { background: '#F2E4D8', color: 'var(--clay)' } : {}}>{v.status}</span>
             </div>
             <div className="listing-row">
-              <span className="district-chip">📍 {v.location}</span>
+              <span className="district-chip">📍 {v.location}{v._km !== null && v._km !== undefined ? ` · ${fmtDistance(v._km)}` : ''}</span>
               {mine ? <span className="badge mine">YOURS</span> : <button className="contact-btn" onClick={() => onContact(v.ownerId, v.name)}>Book</button>}
             </div>
           </div>

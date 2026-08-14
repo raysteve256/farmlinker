@@ -184,7 +184,7 @@ export default function MainApp() {
             <ChatThread me={me} conversation={activeThread} onBack={() => { refreshChatsAndNotifs(); setScreen('chats') }} onToast={toast} onMessageSent={refreshChatsAndNotifs} />
           )}
           {screen === 'profile' && <Profile me={me} onLogout={handleLogout} />}
-          {screen === 'settings' && <Settings onToast={toast} />}
+          {screen === 'settings' && <Settings me={me} onToast={toast} onLocationUpdated={setMe} />}
         </>
       )}
 
