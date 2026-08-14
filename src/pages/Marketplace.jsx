@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import Modal from '../components/Modal'
+import TraceabilityModal from '../components/TraceabilityModal'
 
 function fmtUGX(n) { return 'UGX ' + Number(n).toLocaleString() }
 
@@ -8,6 +9,7 @@ export default function Marketplace({ me, listings, onAdd, onContact, modalOpen,
   const [query, setQuery] = useState('')
   const [form, setForm] = useState({ type: 'Live birds', title: '', quantity: '', price: '', location: '' })
   const [busy, setBusy] = useState(false)
+  const [traceListing, setTraceListing] = useState(null)
 
   const q = query.trim().toLowerCase()
   const items = listings.filter(l => {
@@ -52,7 +54,10 @@ export default function Marketplace({ me, listings, onAdd, onContact, modalOpen,
               <div><div className="listing-title">{l.title}</div><div className="listing-meta">{l.quantity} · {l.farmer_name}</div></div>
               <div className="price-tag">{fmtUGX(l.price)}</div>
             </div>
-            <div className="listing-row"><span className="district-chip">📍 {l.location}</span><span className="badge trace">◎ {l.trace_stamp}</span></div>
+            <div className="listing-row">
+              <span className="district-chip">📍 {l.location}</span>
+              <span className="badge trace" style={{ cursor: 'pointer' }} onClick={() => setTraceListing(l)}>◎ {l.trace_stamp} 🔍</span>
+            </div>
             <div className="listing-row">
               <span></span>
               {mine ? <span className="badge mine">YOURS</span> : <button className="contact-btn" onClick={() => onContact(l.farmer_id, l.farmer_name)}>Contact farmer</button>}
@@ -77,6 +82,8 @@ export default function Marketplace({ me, listings, onAdd, onContact, modalOpen,
           <button className="btn-primary" disabled={busy} onClick={submit}>{busy ? 'Posting…' : 'Post listing'}</button>
         </div>
       </Modal>
+
+      <TraceabilityModal listing={traceListing} onClose={() => setTraceListing(null)} onToast={onToast} />
     </div>
   )
 }

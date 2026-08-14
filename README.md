@@ -32,8 +32,8 @@ Build command: `npm run build`. Publish directory: `dist`. Add `VITE_SUPABASE_UR
 ## What's built
 - **Login** — real accounts backed by Supabase `profiles`, tap-to-login demo flow (see above)
 - **Home** — role-based quick actions (Farmer/Buyer/Supplier/Vet each see different shortcuts)
-- **Marketplace** — post/browse live birds and eggs, traceability stamp per listing
-- **Suppliers** — feed, chicks, equipment, drugs & vaccines
+- **Marketplace** — post/browse live birds and eggs, search by title/location/farmer, filter by type, traceability QR + public verification page per listing
+- **Suppliers** — feed, chicks, equipment, drugs & vaccines, searchable and filterable
 - **Vets** — Farmers see their own requests; Vets see all open requests with Accept/Resolve actions
 - **Community** — Feed (posts with photo upload via Supabase Storage) and Groups (role-based: Mukono Farmers, Suppliers Network, Vets Circle, Buyers Hub)
 - **Chats** — real direct messages and group chats, persisted in Postgres, with unread counts and image sharing
@@ -42,11 +42,12 @@ Build command: `npm run build`. Publish directory: `dist`. Add `VITE_SUPABASE_UR
 
 ## Known limitations (honest roadmap)
 - **No password/OTP auth yet** — see "How login works" above. Phone + OTP is the natural next step for this user base.
-- **Traceability stamp is not yet verifiable** — it's a generated code per listing, not a scannable QR tied to a public verification page.
-- **No payment/commission flow** — the business model describes Mobile Money commission collection; no checkout exists in the app yet.
-- **No search** in Marketplace/Suppliers.
+- **No payment/commission flow** — the business model describes Mobile Money commission collection; no checkout exists in the app yet. Needs real MTN/Airtel merchant API credentials before this can be built for real.
 - **No content moderation or trust/ratings system** — anyone with a session can post anything.
 - **Luganda toggle is decorative** — no translations behind it yet.
+
+## Traceability
+Every marketplace listing gets a unique stamp (e.g. `MK-0114`) at creation. Tapping the stamp badge on any listing opens a QR code and a shareable link (`/verify/:stamp`) to a **public verification page** — no login required, reachable by anyone who scans the code. It shows the listing details, the farm/farmer it traces back to, and when it was posted, pulled live from the same Supabase database. This route is intentionally excluded from the login gate (see `src/App.jsx`) so it works for buyers who aren't Farm Linker users themselves.
 
 ## Design system
 Dark ink-green (`#1B1F16`) with an egg-yolk gold accent (`#F2B705`) and a leaf-green secondary (`#4C7A3D`). Fraunces for headings, Inter for body text, IBM Plex Mono for prices and the traceability stamp — a dashed-circle "stamp" motif repeated across every listing.

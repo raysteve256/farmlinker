@@ -1,3 +1,6 @@
+import { useState } from 'react'
+import TraceabilityModal from '../components/TraceabilityModal'
+
 function fmtUGX(n) { return 'UGX ' + Number(n).toLocaleString() }
 
 const QUICK_ACTIONS = {
@@ -28,6 +31,7 @@ const QUICK_ACTIONS = {
 }
 
 export default function Home({ me, listings, vets, onNavigate, onOpenModal }) {
+  const [traceListing, setTraceListing] = useState(null)
   const actions = QUICK_ACTIONS[me.role] || QUICK_ACTIONS.Farmer
   const sub = me.role === 'Vet' ? 'Open call-outs and disease alerts from farmers around you.'
     : me.role === 'Supplier' ? 'Farmer inquiries and marketplace activity in your district.'
@@ -64,9 +68,10 @@ export default function Home({ me, listings, vets, onNavigate, onOpenModal }) {
             <div><div className="listing-title">{l.title}</div><div className="listing-meta">{l.quantity} · {l.farmer_name}</div></div>
             <div className="price-tag">{fmtUGX(l.price)}</div>
           </div>
-          <div className="listing-row"><span className="district-chip">📍 {l.location}</span><span className="badge trace">◎ {l.trace_stamp}</span></div>
+          <div className="listing-row"><span className="district-chip">📍 {l.location}</span><span className="badge trace" style={{ cursor: 'pointer' }} onClick={() => setTraceListing(l)}>◎ {l.trace_stamp} 🔍</span></div>
         </div>
       ))}
+      <TraceabilityModal listing={traceListing} onClose={() => setTraceListing(null)} />
     </div>
   )
 }
