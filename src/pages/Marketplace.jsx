@@ -5,10 +5,19 @@ function fmtUGX(n) { return 'UGX ' + Number(n).toLocaleString() }
 
 export default function Marketplace({ me, listings, onAdd, onContact, modalOpen, onCloseModal, onToast }) {
   const [filter, setFilter] = useState('all')
+  const [query, setQuery] = useState('')
   const [form, setForm] = useState({ type: 'Live birds', title: '', quantity: '', price: '', location: '' })
   const [busy, setBusy] = useState(false)
 
-  const items = listings.filter(l => filter === 'all' || l.type === filter)
+  const q = query.trim().toLowerCase()
+  const items = listings.filter(l => {
+    if (filter !== 'all' && l.type !== filter) return false
+    if (!q) return true
+    return l.title.toLowerCase().includes(q)
+      || l.location.toLowerCase().includes(q)
+      || (l.farmer_name || '').toLowerCase().includes(q)
+      || l.trace_stamp.toLowerCase().includes(q)
+  })
 
   async function submit() {
     if (!form.title || !form.price || !form.location) { onToast('Fill in title, price and location'); return }
@@ -23,12 +32,18 @@ export default function Marketplace({ me, listings, onAdd, onContact, modalOpen,
   return (
     <div className="screen">
       <div className="section-head"><h2>Marketplace</h2><span className="count">{items.length} listed</span></div>
+      <div className="search-box">
+        <span className="ic">🔍</span>
+        <input value={query} onChange={e => setQuery(e.target.value)} placeholder="Search listings, location, farmer..." />
+        {query && <button className="clear" onClick={() => setQuery('')}>×</button>}
+      </div>
       <div className="chip-row">
         {['all', 'Live birds', 'Eggs'].map(f => (
           <button key={f} className={'chip' + (filter === f ? ' active' : '')} onClick={() => setFilter(f)}>{f === 'all' ? 'All' : f}</button>
         ))}
       </div>
-      {items.length === 0 && <div className="empty"><span className="glyph">🐔</span><p><strong>No listings yet</strong><br />Be the first to post birds or eggs in your area.</p></div>}
+      {items.length === 0 && listings.length === 0 && <div className="empty"><span className="glyph">🐔</span><p><strong>No listings yet</strong><br />Be the first to post birds or eggs in your area.</p></div>}
+      {items.length === 0 && listings.length > 0 && <div className="empty"><span className="glyph">🔍</span><p><strong>No matches</strong><br />Try a different search term or filter.</p></div>}
       {items.map(l => {
         const mine = l.farmer_id === me.id
         return (

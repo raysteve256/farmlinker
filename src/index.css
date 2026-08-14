@@ -57,6 +57,10 @@ p{margin:0;}
 .ghost-btn{background:none;border:1px solid var(--line);color:var(--muted);border-radius:20px;font-weight:600;font-size:12px;padding:7px 12px;cursor:pointer;}
 .district-chip{font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:var(--muted);}
 
+.search-box{position:relative;margin-bottom:12px;}
+.search-box input{padding-left:36px;}
+.search-box .ic{position:absolute;left:12px;top:50%;transform:translateY(-50%);font-size:14px;color:var(--muted);pointer-events:none;}
+.search-box .clear{position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--muted);font-size:15px;cursor:pointer;padding:4px 6px;}
 .chip-row{display:flex;gap:8px;overflow-x:auto;margin-bottom:16px;padding-bottom:2px;}
 .chip{flex-shrink:0;border:1px solid var(--line);background:var(--feather);padding:7px 13px;border-radius:20px;font-size:12.5px;font-weight:500;cursor:pointer;white-space:nowrap;}
 .chip.active{background:var(--ink);color:var(--yolk);border-color:var(--ink);}
