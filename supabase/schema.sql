@@ -12,6 +12,8 @@ create table profiles (
   district text default 'Mukono',
   subcounty text,
   avatar_initials text,
+  latitude numeric(9,6),
+  longitude numeric(9,6),
   created_at timestamptz default now()
 );
 
