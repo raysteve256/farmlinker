@@ -7,13 +7,15 @@ create table profiles (
   id uuid primary key default uuid_generate_v4(),
   auth_id uuid unique references auth.users(id) on delete cascade,
   full_name text not null,
-  role text not null check (role in ('Farmer','Buyer','Supplier','Vet')),
+  role text not null check (role in ('Farmer','Buyer','Supplier','Vet','Admin')),
   phone text,
   district text default 'Mukono',
   subcounty text,
   avatar_initials text,
   latitude numeric(9,6),
   longitude numeric(9,6),
+  is_admin boolean default false,
+  is_banned boolean default false,
   created_at timestamptz default now()
 );
 
@@ -212,6 +214,66 @@ create policy "buyer reads own transactions" on transactions for select using (
 create policy "buyer creates transactions" on transactions for insert with check (
   buyer_id in (select id from profiles where auth_id = auth.uid())
 );
+
+-- ---------- Admin ----------
+create or replace function is_admin() returns boolean
+language sql security definer stable
+set search_path = public as $$
+  select coalesce((select is_admin from profiles where auth_id = auth.uid()), false);
+$$;
+
+create or replace function is_not_banned() returns boolean
+language sql security definer stable
+set search_path = public as $$
+  select coalesce((select not is_banned from profiles where auth_id = auth.uid()), true);
+$$;
+
+create policy "admin reads all vet_requests" on vet_requests for select using (is_admin());
+create policy "admin reads all conversations" on conversations for select using (is_admin());
+create policy "admin reads all conversation_participants" on conversation_participants for select using (is_admin());
+create policy "admin reads all messages" on messages for select using (is_admin());
+create policy "admin reads all notifications" on notifications for select using (is_admin());
+create policy "admin reads all transactions" on transactions for select using (is_admin());
+
+create policy "admin updates profiles" on profiles for update using (is_admin());
+create policy "admin deletes listings" on listings for delete using (is_admin());
+create policy "admin updates listings" on listings for update using (is_admin());
+create policy "admin deletes supplier_products" on supplier_products for delete using (is_admin());
+create policy "admin updates supplier_products" on supplier_products for update using (is_admin());
+create policy "admin deletes posts" on posts for delete using (is_admin());
+create policy "admin deletes messages" on messages for delete using (is_admin());
+create policy "admin deletes vets" on vets for delete using (is_admin());
+create policy "admin updates vet_requests_admin" on vet_requests for update using (is_admin());
+create policy "admin updates transactions" on transactions for update using (is_admin());
+
+-- Ban enforcement baked directly into the insert policies (defense in
+-- depth — a banned user is blocked even if the client-side gate is bypassed)
+drop policy if exists "insert own listing" on listings;
+create policy "insert own listing" on listings for insert with check (
+  is_not_banned() and farmer_id in (select id from profiles where auth_id = auth.uid())
+);
+drop policy if exists "insert own supplier product" on supplier_products;
+create policy "insert own supplier product" on supplier_products for insert with check (
+  is_not_banned() and supplier_id in (select id from profiles where auth_id = auth.uid())
+);
+drop policy if exists "insert own vet request" on vet_requests;
+create policy "insert own vet request" on vet_requests for insert with check (
+  is_not_banned() and farmer_id in (select id from profiles where auth_id = auth.uid())
+);
+drop policy if exists "insert own post" on posts;
+create policy "insert own post" on posts for insert with check (
+  is_not_banned() and author_id in (select id from profiles where auth_id = auth.uid())
+);
+drop policy if exists "participants send messages" on messages;
+create policy "participants send messages" on messages for insert with check (
+  is_not_banned() and sender_id in (select id from profiles where auth_id = auth.uid())
+  and conversation_id in (select conversation_id from conversation_participants cp join profiles p on p.id = cp.profile_id where p.auth_id = auth.uid())
+);
+
+-- Seed one admin account — change auth_id linkage by logging into it from
+-- the app's Login screen like any other demo account.
+insert into profiles (id, full_name, role, phone, district, subcounty, is_admin, latitude, longitude)
+values ('99999999-9999-9999-9999-999999999999', 'Platform Admin', 'Admin', null, 'Mukono', 'Mukono Town', true, 0.353300, 32.755300);
 
 -- ---------- Storage ----------
 insert into storage.buckets (id, name, public) values ('farmlinker-media', 'farmlinker-media', true)

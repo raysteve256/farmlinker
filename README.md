@@ -46,6 +46,15 @@ Profiles carry real latitude/longitude (captured via the browser's Geolocation A
 ## Mobile Money provision
 Every Marketplace listing and Supplier product has a **💰 Pay** button. Tapping it opens a real, working flow — commission split shown transparently (5%, matching the Business Model Canvas), phone number and provider (MTN/Airtel) captured, and a `transactions` row created in Supabase with `status: pending_integration`. **No money actually moves yet** — the modal says so plainly, and the request shows up under the buyer/seller's Profile as "🚧 Pending integration." This is the real integration point: once you have MTN/Airtel merchant API credentials, replacing `pending_integration` with an actual charge call is the only change needed — the data model, commission logic, and UI are already done.
 
+## Admin console
+Logging in as the seeded **"Ssemambo Steven (Admin)"** account (role `Admin`) replaces the normal farmer-style UI entirely with a separate admin console:
+- **Dashboard** — platform-wide stats: users by role, active listings, open/urgent vet requests, disease alerts, messages sent, Mobile Money request volume and potential commission
+- **Users** — every account, with inline role changes and ban/unban (banned accounts are blocked at the database level, not just the UI — see `is_not_banned()` in the schema)
+- **Content** — delete any listing or post platform-wide; view all vet requests regardless of who filed them
+- **Payments** — every Mobile Money request logged across the whole platform, not just your own
+
+**Security note:** the `Admin` role can't be self-granted — the account-creation dropdown only offers Farmer/Buyer/Supplier/Vet. Admin access is controlled entirely by the `is_admin` flag on a profile row, checked server-side via a `SECURITY DEFINER` Postgres function (`is_admin()`) referenced in RLS policies. The anon key the app uses never has elevated privileges by itself — only a session linked to an `is_admin = true` profile does.
+
 ## Known limitations (honest roadmap)
 - **No password/OTP auth yet** — see "How login works" above. Phone + OTP is the natural next step for this user base.
 - **Mobile Money is a provision, not a live payment rail** — see above. Needs real MTN/Airtel merchant API credentials before real charging can be built.

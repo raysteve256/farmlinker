@@ -12,6 +12,7 @@ import Chats from './Chats'
 import ChatThread from './ChatThread'
 import Profile from './Profile'
 import Settings from './Settings'
+import AdminApp from './AdminApp'
 import { getMyProfile, logout as authLogout } from '../lib/auth'
 import {
   getListings, addListing, getSuppliers, addSupplierProduct,
@@ -159,6 +160,7 @@ export default function MainApp() {
 
   if (checkingSession) return <div className="app"><div className="loading">Loading Farm Linker…</div></div>
   if (!me) return <div className="app"><Login onLoggedIn={onLoggedIn} onToast={toast} /></div>
+  if (me.role === 'Admin') return <AdminApp me={me} onLogout={handleLogout} />
 
   return (
     <div className="app">
