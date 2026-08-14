@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import Modal from '../components/Modal'
 import TraceabilityModal from '../components/TraceabilityModal'
+import PaymentModal from '../components/PaymentModal'
 import { distanceKm, fmtDistance } from '../lib/geo'
 
 function fmtUGX(n) { return 'UGX ' + Number(n).toLocaleString() }
@@ -12,6 +13,7 @@ export default function Marketplace({ me, listings, onAdd, onContact, modalOpen,
   const [form, setForm] = useState({ type: 'Live birds', title: '', quantity: '', price: '', location: '' })
   const [busy, setBusy] = useState(false)
   const [traceListing, setTraceListing] = useState(null)
+  const [payItem, setPayItem] = useState(null)
 
   const iHaveLocation = me.latitude != null && me.longitude != null
 
@@ -82,7 +84,12 @@ export default function Marketplace({ me, listings, onAdd, onContact, modalOpen,
             </div>
             <div className="listing-row">
               <span></span>
-              {mine ? <span className="badge mine">YOURS</span> : <button className="contact-btn" onClick={() => onContact(l.farmer_id, l.farmer_name)}>Contact farmer</button>}
+              {mine ? <span className="badge mine">YOURS</span> : (
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <button className="ghost-btn" onClick={() => setPayItem(l)}>💰 Pay</button>
+                  <button className="contact-btn" onClick={() => onContact(l.farmer_id, l.farmer_name)}>Contact farmer</button>
+                </div>
+              )}
             </div>
           </div>
         )
@@ -106,6 +113,7 @@ export default function Marketplace({ me, listings, onAdd, onContact, modalOpen,
       </Modal>
 
       <TraceabilityModal listing={traceListing} onClose={() => setTraceListing(null)} onToast={onToast} />
+      <PaymentModal item={payItem} itemType="listing" me={me} onClose={() => setPayItem(null)} onToast={onToast} />
     </div>
   )
 }

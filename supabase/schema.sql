@@ -105,6 +105,26 @@ create table notifications (
   created_at timestamptz default now()
 );
 
+-- Mobile Money provision: records payment REQUESTS, not real charges.
+-- See README "Mobile Money provision" section.
+create table transactions (
+  id uuid primary key default uuid_generate_v4(),
+  item_type text not null check (item_type in ('listing','supplier_product')),
+  item_id uuid not null,
+  buyer_id uuid references profiles(id) on delete cascade,
+  seller_id uuid references profiles(id) on delete cascade,
+  amount numeric(12,2) not null,
+  commission_rate numeric(5,4) not null default 0.05,
+  commission_amount numeric(12,2) not null,
+  payment_method text check (payment_method in ('MTN Mobile Money','Airtel Money')),
+  phone_number text,
+  status text not null default 'pending_integration' check (
+    status in ('pending_integration','paid','failed','cancelled')
+  ),
+  created_at timestamptz default now(),
+  paid_at timestamptz
+);
+
 -- ---------- Row Level Security ----------
 alter table profiles enable row level security;
 alter table listings enable row level security;
@@ -183,6 +203,15 @@ create policy "recipient updates notifications" on notifications for update usin
   recipient_id in (select id from profiles where auth_id = auth.uid())
 );
 create policy "system inserts notifications" on notifications for insert with check (auth.uid() is not null);
+
+alter table transactions enable row level security;
+create policy "buyer reads own transactions" on transactions for select using (
+  buyer_id in (select id from profiles where auth_id = auth.uid())
+  or seller_id in (select id from profiles where auth_id = auth.uid())
+);
+create policy "buyer creates transactions" on transactions for insert with check (
+  buyer_id in (select id from profiles where auth_id = auth.uid())
+);
 
 -- ---------- Storage ----------
 insert into storage.buckets (id, name, public) values ('farmlinker-media', 'farmlinker-media', true)

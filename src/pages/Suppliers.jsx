@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import Modal from '../components/Modal'
+import PaymentModal from '../components/PaymentModal'
 import { distanceKm, fmtDistance } from '../lib/geo'
 
 function fmtUGX(n) { return 'UGX ' + Number(n).toLocaleString() }
@@ -11,6 +12,7 @@ export default function Suppliers({ me, suppliers, onAdd, onContact, modalOpen, 
   const [sortNearest, setSortNearest] = useState(true)
   const [form, setForm] = useState({ category: 'Feed', name: '', price: '', location: '' })
   const [busy, setBusy] = useState(false)
+  const [payItem, setPayItem] = useState(null)
 
   const iHaveLocation = me.latitude != null && me.longitude != null
 
@@ -75,7 +77,12 @@ export default function Suppliers({ me, suppliers, onAdd, onContact, modalOpen, 
             </div>
             <div className="listing-row">
               <span className="district-chip">📍 {s.location}{s._km !== null && s._km !== undefined ? ` · ${fmtDistance(s._km)}` : ''}</span>
-              {mine ? <span className="badge mine">YOURS</span> : <button className="contact-btn" onClick={() => onContact(s.supplier_id, s.supplier_name)}>Contact supplier</button>}
+              {mine ? <span className="badge mine">YOURS</span> : (
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <button className="ghost-btn" onClick={() => setPayItem(s)}>💰 Pay</button>
+                  <button className="contact-btn" onClick={() => onContact(s.supplier_id, s.supplier_name)}>Contact supplier</button>
+                </div>
+              )}
             </div>
           </div>
         )
@@ -95,6 +102,8 @@ export default function Suppliers({ me, suppliers, onAdd, onContact, modalOpen, 
           <button className="btn-primary" disabled={busy} onClick={submit}>{busy ? 'Listing…' : 'List product'}</button>
         </div>
       </Modal>
+
+      <PaymentModal item={payItem} itemType="supplier_product" me={me} onClose={() => setPayItem(null)} onToast={onToast} />
     </div>
   )
 }

@@ -43,9 +43,12 @@ Build command: `npm run build`. Publish directory: `dist`. Add `VITE_SUPABASE_UR
 ## Proximity search
 Profiles carry real latitude/longitude (captured via the browser's Geolocation API, with a manual "Share my location" option in Settings — never required, always opt-in). Marketplace, Suppliers, and Vets all show real distance ("2.3 km away") from the logged-in user to each listing's owner, computed client-side with the Haversine formula, and can be sorted "Nearest first". Users without a shared location simply don't see distances — nothing breaks, it degrades gracefully.
 
+## Mobile Money provision
+Every Marketplace listing and Supplier product has a **💰 Pay** button. Tapping it opens a real, working flow — commission split shown transparently (5%, matching the Business Model Canvas), phone number and provider (MTN/Airtel) captured, and a `transactions` row created in Supabase with `status: pending_integration`. **No money actually moves yet** — the modal says so plainly, and the request shows up under the buyer/seller's Profile as "🚧 Pending integration." This is the real integration point: once you have MTN/Airtel merchant API credentials, replacing `pending_integration` with an actual charge call is the only change needed — the data model, commission logic, and UI are already done.
+
 ## Known limitations (honest roadmap)
 - **No password/OTP auth yet** — see "How login works" above. Phone + OTP is the natural next step for this user base.
-- **No payment/commission flow** — the business model describes Mobile Money commission collection; no checkout exists in the app yet. Needs real MTN/Airtel merchant API credentials before this can be built for real.
+- **Mobile Money is a provision, not a live payment rail** — see above. Needs real MTN/Airtel merchant API credentials before real charging can be built.
 - **No content moderation or trust/ratings system** — anyone with a session can post anything.
 - **Luganda toggle is decorative** — no translations behind it yet.
 
