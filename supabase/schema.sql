@@ -139,6 +139,23 @@ alter table conversation_participants enable row level security;
 alter table messages enable row level security;
 alter table notifications enable row level security;
 
+-- Fixes what was originally a recursion bug: policies on
+-- conversations/conversation_participants/messages need to check "which
+-- conversations am I in", but doing that with a raw subquery against
+-- conversation_participants from inside conversation_participants' own
+-- policy causes "infinite recursion detected in policy for relation
+-- conversation_participants". A SECURITY DEFINER function breaks the
+-- loop because its internal query runs as the function's (table-owning)
+-- definer, which bypasses RLS.
+create or replace function my_conversation_ids() returns setof uuid
+language sql security definer stable
+set search_path = public as $$
+  select cp.conversation_id
+  from conversation_participants cp
+  join profiles p on p.id = cp.profile_id
+  where p.auth_id = auth.uid();
+$$;
+
 create policy "public read profiles" on profiles for select using (true);
 create policy "public read listings" on listings for select using (true);
 create policy "public read suppliers" on supplier_products for select using (true);
@@ -176,12 +193,15 @@ create policy "insert own post" on posts for insert with check (
   author_id in (select id from profiles where auth_id = auth.uid())
 );
 
+-- Non-recursive by design: my_conversation_ids() is defined above, right
+-- after enabling RLS — see that comment for why this needs to be a
+-- SECURITY DEFINER function rather than a plain subquery.
 create policy "participants read conversations" on conversations for select using (
-  id in (select conversation_id from conversation_participants cp join profiles p on p.id = cp.profile_id where p.auth_id = auth.uid())
+  id in (select my_conversation_ids())
 );
 create policy "participants read participant rows" on conversation_participants for select using (
   profile_id in (select id from profiles where auth_id = auth.uid())
-  or conversation_id in (select conversation_id from conversation_participants cp join profiles p on p.id = cp.profile_id where p.auth_id = auth.uid())
+  or conversation_id in (select my_conversation_ids())
 );
 create policy "participants update own unread" on conversation_participants for update using (
   profile_id in (select id from profiles where auth_id = auth.uid())
@@ -190,13 +210,14 @@ create policy "participants insert" on conversation_participants for insert with
   profile_id in (select id from profiles where auth_id = auth.uid())
 );
 create policy "participants read messages" on messages for select using (
-  conversation_id in (select conversation_id from conversation_participants cp join profiles p on p.id = cp.profile_id where p.auth_id = auth.uid())
+  conversation_id in (select my_conversation_ids())
 );
 create policy "participants send messages" on messages for insert with check (
   sender_id in (select id from profiles where auth_id = auth.uid())
-  and conversation_id in (select conversation_id from conversation_participants cp join profiles p on p.id = cp.profile_id where p.auth_id = auth.uid())
+  and conversation_id in (select my_conversation_ids())
 );
 create policy "anyone authenticated can create conversation" on conversations for insert with check (auth.uid() is not null);
+
 
 create policy "recipient reads notifications" on notifications for select using (
   recipient_id in (select id from profiles where auth_id = auth.uid())
@@ -267,7 +288,7 @@ create policy "insert own post" on posts for insert with check (
 drop policy if exists "participants send messages" on messages;
 create policy "participants send messages" on messages for insert with check (
   is_not_banned() and sender_id in (select id from profiles where auth_id = auth.uid())
-  and conversation_id in (select conversation_id from conversation_participants cp join profiles p on p.id = cp.profile_id where p.auth_id = auth.uid())
+  and conversation_id in (select my_conversation_ids())
 );
 
 -- Seed one admin account, UNCLAIMED (auth_id null). It does NOT appear in
