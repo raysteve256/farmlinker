@@ -67,6 +67,7 @@ export default function Suppliers({ me, suppliers, onAdd, onContact, modalOpen, 
       )}
       {items.length === 0 && suppliers.length === 0 && <div className="empty"><span className="glyph">🧰</span><p><strong>No suppliers yet</strong><br />Suppliers in your district will appear here.</p></div>}
       {items.length === 0 && suppliers.length > 0 && <div className="empty"><span className="glyph">🔍</span><p><strong>No matches</strong><br />Try a different search term or filter.</p></div>}
+      <div className="card-grid">
       {items.map(s => {
         const mine = s.supplier_id === me.id
         return (
@@ -87,6 +88,7 @@ export default function Suppliers({ me, suppliers, onAdd, onContact, modalOpen, 
           </div>
         )
       })}
+      </div>
 
       <Modal open={modalOpen} onClose={onCloseModal} title="List your product">
         <label>Category</label>

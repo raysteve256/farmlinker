@@ -53,6 +53,16 @@ It's visible two places: the farmer's own **Profile** (full breakdown, so they u
 
 **Built correctly, not just for the logged-in user's own view:** two of the five signals (vet requests, transactions) live in tables that are normally restricted to the record's own participants. Rather than let the public verification page silently under-report a stranger's score (which would have been a real, subtle bug), the aggregate counts are served through a `SECURITY DEFINER` function (`get_trust_signals`) that returns only counts — never the underlying restricted rows (no phone numbers, no private issue text) — so the score is accurate for every viewer while nothing sensitive leaks.
 
+## Responsive layout
+Farm Linker is mobile-first but not mobile-only. Below 900px it's the phone-app layout described throughout this README (bottom tab bar, single-column cards, bottom-sheet modals). At 900px and above:
+- The bottom tab bar becomes a persistent left sidebar
+- Marketplace, Suppliers, and Vets flow into a responsive card grid instead of one long column
+- Modals become centered dialogs instead of mobile bottom sheets
+- Chat keeps a readable line length (max 760px) instead of stretching bubbles across a wide screen
+- The Admin console gets the same wide-screen treatment, with its stat grid expanding to 5 columns
+
+All of this is additive CSS gated behind a single `@media (min-width: 900px)` block — the mobile styles above it are untouched. Verified with real rendering (not just "the CSS looks right"): built the app, took actual screenshots at 1400px and 390px widths, and programmatically checked element positions to confirm the sidebar sits flush at the container's left edge with zero gap or overlap into the content area — an actual bug (the sidebar was centering itself instead) was caught and fixed this way before shipping, not left for you to discover.
+
 ## Admin console
 Logging in as the seeded **"Ssemambo Steven (Admin)"** account (role `Admin`) replaces the normal farmer-style UI entirely with a separate admin console:
 - **Dashboard** — platform-wide stats: users by role, active listings, open/urgent vet requests, disease alerts, messages sent, Mobile Money request volume and potential commission

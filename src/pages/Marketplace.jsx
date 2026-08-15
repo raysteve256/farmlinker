@@ -70,6 +70,7 @@ export default function Marketplace({ me, listings, onAdd, onContact, modalOpen,
       )}
       {items.length === 0 && listings.length === 0 && <div className="empty"><span className="glyph">🐔</span><p><strong>No listings yet</strong><br />Be the first to post birds or eggs in your area.</p></div>}
       {items.length === 0 && listings.length > 0 && <div className="empty"><span className="glyph">🔍</span><p><strong>No matches</strong><br />Try a different search term or filter.</p></div>}
+      <div className="card-grid">
       {items.map(l => {
         const mine = l.farmer_id === me.id
         return (
@@ -94,6 +95,7 @@ export default function Marketplace({ me, listings, onAdd, onContact, modalOpen,
           </div>
         )
       })}
+      </div>
 
       <Modal open={modalOpen} onClose={onCloseModal} title="Post a listing">
         <label>Type</label>

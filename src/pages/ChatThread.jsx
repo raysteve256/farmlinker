@@ -62,7 +62,7 @@ export default function ChatThread({ me, conversation, onBack, onToast, onMessag
   const sub = conversation.type === 'group' ? `${conversation.category} group` : 'Direct message'
 
   return (
-    <div className="screen" style={{ padding: 0 }}>
+    <div className="screen thread-screen" style={{ padding: 0 }}>
       <div className="thread-header">
         <button className="back-btn" onClick={onBack}>←</button>
         <div className="chat-avatar" style={{ width: 36, height: 36, fontSize: 14 }}>{initials(title)}</div>

@@ -194,3 +194,115 @@ textarea{resize:vertical;min-height:70px;}
 .trust-bar-track{height:6px;background:var(--line);border-radius:4px;overflow:hidden;}
 .trust-bar-fill{height:100%;background:var(--leaf-deep);border-radius:4px;}
 .logout-btn{width:100%;background:none;border:1.3px solid var(--clay);color:var(--clay);border-radius:24px;padding:13px;font-weight:700;font-size:14px;cursor:pointer;}
+
+/* ==========================================================================
+   Desktop / wide-viewport layout (>=900px)
+   Mobile styles above are completely untouched — this is additive.
+   ========================================================================== */
+@media (min-width: 900px) {
+  body{ padding: 24px 0; }
+
+  .app--shell{
+    max-width: 1180px;
+    min-height: calc(100vh - 48px);
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: 0 30px 80px rgba(0,0,0,0.35);
+    display: flex;
+    flex-direction: column;
+  }
+
+  .app--shell .topbar{
+    padding: 16px 28px;
+  }
+
+  /* Sidebar takes over from the bottom tab bar */
+  .app--shell .bottomnav{
+    position: absolute;
+    top: 65px; /* below the topbar */
+    bottom: 0;
+    left: 0;
+    right: auto;
+    justify-content: flex-start;
+    display: flex;
+    z-index: 10;
+  }
+  .app--shell .bottomnav-inner{
+    width: 200px;
+    max-width: none;
+    height: 100%;
+    flex-direction: column;
+    align-items: stretch;
+    padding: 18px 10px;
+    gap: 2px;
+    border-right: 1px solid rgba(247,242,231,0.08);
+  }
+  .app--shell .navbtn{
+    flex-direction: row;
+    justify-content: flex-start;
+    gap: 12px;
+    padding: 11px 14px;
+    border-radius: 10px;
+  }
+  .app--shell .navbtn:hover{ background: rgba(247,242,231,0.06); }
+  .app--shell .navbtn.active{ background: rgba(242,183,5,0.12); }
+  .app--shell .navbtn .ic{ font-size: 17px; }
+  .app--shell .navbtn .lb{ font-size: 13px; }
+
+  .app--shell .screen{
+    margin-left: 200px;
+    padding: 26px 32px 60px;
+    max-width: 760px;
+  }
+
+  /* Chat thread spans the remaining width instead of the whole shell */
+  .app--shell .thread-screen{
+    margin-left: 200px;
+    max-width: none;
+    padding: 0;
+  }
+
+  .app--shell .fab{
+    left: 200px;
+    max-width: none;
+    padding: 0 32px;
+    bottom: 32px;
+  }
+
+  /* Cards flow into a responsive grid instead of a single stacked column */
+  .card-grid{
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 14px;
+  }
+  .card-grid > .card{ margin-bottom: 0; }
+
+  /* Modals become centered dialogs, not mobile bottom sheets */
+  .modal-backdrop{ align-items: center; }
+  .modal{
+    max-width: 460px;
+    border-radius: 20px;
+    max-height: 80vh;
+  }
+
+  .hero-card{ padding: 28px; }
+  .quick-grid{ grid-template-columns: repeat(4, 1fr); }
+  .stat-grid{ grid-template-columns: repeat(4, 1fr); }
+
+  /* Admin console gets a slightly different top-level treatment (no
+     bottom-nav sidebar — it has its own tab bar) but still benefits from
+     the wider shell and grid utilities above. */
+  .app--admin .admin-topbar{ padding: 16px 28px; }
+  .app--admin .admin-tabs{ padding: 12px 28px; }
+  .app--admin .screen{ margin-left: 0; max-width: 100%; padding: 24px 28px 50px; }
+  .app--admin .stat-grid{ grid-template-columns: repeat(5, 1fr); }
+
+  /* Chat thread: keep line length readable instead of stretching bubbles
+     across the full wide content area */
+  .thread-body, .composer{ max-width: 760px; margin-left: auto; margin-right: auto; width: 100%; }
+  .thread-header{ padding-left: 28px; }
+}
+
+@media (min-width: 1300px) {
+  .card-grid{ grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); }
+}

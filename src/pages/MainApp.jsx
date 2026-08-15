@@ -164,7 +164,7 @@ export default function MainApp() {
   if (me.role === 'Admin') return <AdminApp me={me} onLogout={handleLogout} />
 
   return (
-    <div className="app">
+    <div className="app app--shell">
       <TopBar
         initials={initials(me.full_name)}
         notifCount={unreadNotifs}

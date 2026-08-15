@@ -65,7 +65,7 @@ export default function AdminApp({ me, onLogout }) {
   useEffect(() => { loadAll() }, [])
 
   return (
-    <div className="app" style={{ background: 'var(--parchment)' }}>
+    <div className="app app--shell app--admin" style={{ background: 'var(--parchment)' }}>
       <div className="admin-topbar">
         <div className="brand"><div className="dot" /><span className="brand-name" style={{ color: 'var(--parchment)' }}>Farm Linker</span></div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>

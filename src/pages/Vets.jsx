@@ -43,6 +43,7 @@ export default function Vets({ me, vets, vetRequests, onAdd, onContact, onAccept
           <p style={{ fontSize: 12, color: 'var(--muted)' }}>Share your location in Settings to find the nearest vet.</p>
         </div>
       )}
+      <div className="card-grid">
       {sortedVets.map(v => {
         const mine = v.ownerId === me.id
         const open = v.status === 'Available'
@@ -59,6 +60,7 @@ export default function Vets({ me, vets, vetRequests, onAdd, onContact, onAccept
           </div>
         )
       })}
+      </div>
 
       <div className="section-head" style={{ marginTop: 22 }}><h2>{isVet ? 'Requests for you' : 'Your requests'}</h2></div>
       {isVet ? (
