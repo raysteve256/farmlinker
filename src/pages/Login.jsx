@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import Modal from '../components/Modal'
-import { listProfiles, claimProfile, createProfile } from '../lib/auth'
+import { listProfiles, claimProfile, createProfile, adminSignUp, adminSignIn } from '../lib/auth'
 import { requestBrowserLocation } from '../lib/geo'
 
 function initials(name) { return (name || '?').split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase() }
@@ -15,8 +15,20 @@ export default function Login({ onLoggedIn, onToast }) {
   const [coords, setCoords] = useState(null)
   const [locating, setLocating] = useState(false)
 
+  const [adminModalOpen, setAdminModalOpen] = useState(false)
+  const [adminMode, setAdminMode] = useState('signin') // 'signin' | 'signup'
+  const [adminForm, setAdminForm] = useState({ email: '', password: '' })
+  const [adminBusy, setAdminBusy] = useState(false)
+  const [adminNotice, setAdminNotice] = useState(null)
+
   useEffect(() => {
-    listProfiles().then(setAccounts).catch(() => onToast('Could not load accounts — check your connection')).finally(() => setLoading(false))
+    // Admin accounts never appear in the public tap-to-login list — see
+    // the "bootstrap admin claim" RLS policy for why that's enforced at
+    // the database level too, not just hidden here.
+    listProfiles()
+      .then(rows => setAccounts(rows.filter(a => !a.is_admin)))
+      .catch(() => onToast('Could not load accounts — check your connection'))
+      .finally(() => setLoading(false))
   }, [])
 
   async function shareLocation() {
@@ -61,6 +73,33 @@ export default function Login({ onLoggedIn, onToast }) {
     }
   }
 
+  async function submitAdmin() {
+    if (!adminForm.email.trim() || adminForm.password.length < 6) {
+      onToast('Enter a valid email and a password of at least 6 characters')
+      return
+    }
+    try {
+      setAdminBusy(true)
+      setAdminNotice(null)
+      if (adminMode === 'signup') {
+        const result = await adminSignUp(adminForm.email.trim(), adminForm.password)
+        if (result.needsEmailConfirmation) {
+          setAdminNotice('Check your email to confirm your address, then come back and sign in.')
+          setAdminMode('signin')
+          return
+        }
+        onLoggedIn(result.profile)
+      } else {
+        const result = await adminSignIn(adminForm.email.trim(), adminForm.password)
+        onLoggedIn(result.profile)
+      }
+    } catch (e) {
+      onToast('Admin access failed: ' + e.message)
+    } finally {
+      setAdminBusy(false)
+    }
+  }
+
   return (
     <div className="dark-screen">
       <div className="stamp-mark"><span>MUKONO<br />UGANDA</span></div>
@@ -84,7 +123,10 @@ export default function Login({ onLoggedIn, onToast }) {
       )}
 
       <button className="new-account-btn" onClick={() => setModalOpen(true)}>+ Create a new account</button>
-      <p className="login-foot">Real Supabase-backed accounts — tap any to log in, no password needed yet.</p>
+      <p className="login-foot">
+        Real Supabase-backed accounts — tap any to log in, no password needed yet.<br />
+        <span style={{ cursor: 'pointer', textDecoration: 'underline' }} onClick={() => { setAdminNotice(null); setAdminModalOpen(true) }}>Platform admin? Access here</span>
+      </p>
 
       <Modal open={modalOpen} onClose={() => setModalOpen(false)} title="Create account">
         <label>Full name</label>
@@ -108,6 +150,27 @@ export default function Login({ onLoggedIn, onToast }) {
         <div className="modal-actions">
           <button className="btn-secondary" onClick={() => setModalOpen(false)}>Cancel</button>
           <button className="btn-primary" disabled={busy} onClick={submitNew}>{busy ? 'Creating…' : 'Create & log in'}</button>
+        </div>
+      </Modal>
+
+      <Modal open={adminModalOpen} onClose={() => setAdminModalOpen(false)} title={adminMode === 'signup' ? 'Set up admin access' : 'Admin sign in'}>
+        <p style={{ fontSize: 12, color: 'var(--muted)' }}>
+          {adminMode === 'signup'
+            ? 'One-time setup — this links your email/password to the platform admin account. Only works once; whoever completes it first owns admin access.'
+            : 'Real email/password sign-in — separate from the demo tap-to-login accounts above.'}
+        </p>
+        {adminNotice && <p style={{ fontSize: 12, color: 'var(--leaf-deep)', marginTop: 8 }}>{adminNotice}</p>}
+        <label>Email</label>
+        <input type="email" value={adminForm.email} onChange={e => setAdminForm({ ...adminForm, email: e.target.value })} placeholder="you@example.com" />
+        <label>Password</label>
+        <input type="password" value={adminForm.password} onChange={e => setAdminForm({ ...adminForm, password: e.target.value })} placeholder="At least 6 characters" />
+        <div className="modal-actions">
+          <button className="btn-secondary" onClick={() => setAdminMode(adminMode === 'signup' ? 'signin' : 'signup')}>
+            {adminMode === 'signup' ? 'I have access already' : 'First-time setup'}
+          </button>
+          <button className="btn-primary" disabled={adminBusy} onClick={submitAdmin}>
+            {adminBusy ? 'Please wait…' : adminMode === 'signup' ? 'Set up access' : 'Sign in'}
+          </button>
         </div>
       </Modal>
     </div>

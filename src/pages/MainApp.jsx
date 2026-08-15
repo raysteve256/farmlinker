@@ -13,7 +13,7 @@ import ChatThread from './ChatThread'
 import Profile from './Profile'
 import Settings from './Settings'
 import AdminApp from './AdminApp'
-import { getMyProfile, logout as authLogout } from '../lib/auth'
+import { getMyProfile, logout as authLogout, adminLogout } from '../lib/auth'
 import {
   getListings, addListing, getSuppliers, addSupplierProduct,
   getVets, getVetRequests, addVetRequest, acceptVetRequest, resolveVetRequest,
@@ -81,8 +81,9 @@ export default function MainApp() {
     setMe(profile)
   }
 
-  function handleLogout() {
-    authLogout()
+  async function handleLogout() {
+    if (me?.role === 'Admin') await adminLogout()
+    else authLogout()
     setMe(null)
     setScreen('home')
   }

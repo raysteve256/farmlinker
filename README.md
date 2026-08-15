@@ -53,7 +53,9 @@ Logging in as the seeded **"Ssemambo Steven (Admin)"** account (role `Admin`) re
 - **Content** — delete any listing or post platform-wide; view all vet requests regardless of who filed them
 - **Payments** — every Mobile Money request logged across the whole platform, not just your own
 
-**Security note:** the `Admin` role can't be self-granted — the account-creation dropdown only offers Farmer/Buyer/Supplier/Vet. Admin access is controlled entirely by the `is_admin` flag on a profile row, checked server-side via a `SECURITY DEFINER` Postgres function (`is_admin()`) referenced in RLS policies. The anon key the app uses never has elevated privileges by itself — only a session linked to an `is_admin = true` profile does.
+**Security note:** the `Admin` role can't be self-granted through normal signup — the account-creation dropdown only offers Farmer/Buyer/Supplier/Vet, and admin accounts are excluded entirely from the public tap-to-login list. Getting admin access requires **real email/password authentication** via a separate "Platform admin? Access here" link on the login screen — a one-time signup that links your email/password to the single seeded admin profile (whoever completes it first owns it; RLS enforces this can only happen once, and only via a genuine, non-anonymous session — never the anonymous demo sessions used elsewhere in the app). Password can be changed anytime from the admin console (🔑 icon). Admin power itself is enforced by a `SECURITY DEFINER` Postgres function (`is_admin()`) referenced in RLS policies — the anon key the app uses never has elevated privileges by itself.
+
+**Recommended manual step:** enable "Leaked Password Protection" in Supabase Dashboard → Authentication → Policies — checks new passwords against known-breached lists. Not something I can toggle remotely, same as the Anonymous Sign-ins setting.
 
 ## Known limitations (honest roadmap)
 - **No password/OTP auth yet** — see "How login works" above. Phone + OTP is the natural next step for this user base.

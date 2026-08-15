@@ -1,9 +1,11 @@
 import { useEffect, useRef, useState } from 'react'
 import Toast from '../components/Toast'
+import Modal from '../components/Modal'
 import AdminDashboard from './AdminDashboard'
 import AdminUsers from './AdminUsers'
 import AdminContent from './AdminContent'
 import AdminTransactions from './AdminTransactions'
+import { adminChangePassword } from '../lib/auth'
 import {
   getPlatformStats, getAllUsers, getAllListingsAdmin, getAllPostsAdmin,
   getAllVetRequestsAdmin, getAllTransactionsAdmin
@@ -25,6 +27,9 @@ export default function AdminApp({ me, onLogout }) {
   const [posts, setPosts] = useState([])
   const [vetRequests, setVetRequests] = useState([])
   const [transactions, setTransactions] = useState([])
+  const [pwModalOpen, setPwModalOpen] = useState(false)
+  const [newPassword, setNewPassword] = useState('')
+  const [pwBusy, setPwBusy] = useState(false)
   const toastRef = useRef(null)
   const toast = (msg) => toastRef.current?.fire(msg)
 
@@ -42,6 +47,21 @@ export default function AdminApp({ me, onLogout }) {
     setLoading(false)
   }
 
+  async function changePassword() {
+    if (newPassword.length < 6) { toast('Password must be at least 6 characters'); return }
+    try {
+      setPwBusy(true)
+      await adminChangePassword(newPassword)
+      toast('Password updated')
+      setPwModalOpen(false)
+      setNewPassword('')
+    } catch (e) {
+      toast('Could not update password: ' + e.message)
+    } finally {
+      setPwBusy(false)
+    }
+  }
+
   useEffect(() => { loadAll() }, [])
 
   return (
@@ -50,6 +70,7 @@ export default function AdminApp({ me, onLogout }) {
         <div className="brand"><div className="dot" /><span className="brand-name" style={{ color: 'var(--parchment)' }}>Farm Linker</span></div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <span className="role-pill">ADMIN</span>
+          <button className="icon-btn" onClick={() => setPwModalOpen(true)} title="Change password">🔑</button>
           <button className="icon-btn" onClick={onLogout} title="Log out">🚪</button>
         </div>
       </div>
@@ -69,6 +90,16 @@ export default function AdminApp({ me, onLogout }) {
           </>
         )}
       </div>
+
+      <Modal open={pwModalOpen} onClose={() => setPwModalOpen(false)} title="Change admin password">
+        <label>New password</label>
+        <input type="password" value={newPassword} onChange={e => setNewPassword(e.target.value)} placeholder="At least 6 characters" />
+        <div className="modal-actions">
+          <button className="btn-secondary" onClick={() => setPwModalOpen(false)}>Cancel</button>
+          <button className="btn-primary" disabled={pwBusy} onClick={changePassword}>{pwBusy ? 'Updating…' : 'Update password'}</button>
+        </div>
+      </Modal>
+
       <Toast ref={toastRef} />
     </div>
   )

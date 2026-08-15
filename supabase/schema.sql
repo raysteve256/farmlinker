@@ -270,10 +270,31 @@ create policy "participants send messages" on messages for insert with check (
   and conversation_id in (select conversation_id from conversation_participants cp join profiles p on p.id = cp.profile_id where p.auth_id = auth.uid())
 );
 
--- Seed one admin account — change auth_id linkage by logging into it from
--- the app's Login screen like any other demo account.
+-- Seed one admin account, UNCLAIMED (auth_id null). It does NOT appear in
+-- the app's public tap-to-login list and cannot be claimed by the normal
+-- anonymous "claim profile" mechanism (see policies below). It can only be
+-- linked via real email/password sign-up through the app's hidden
+-- "Platform admin? Access here" flow — a one-time bootstrap, first come
+-- first served, enforced at the RLS level below.
 insert into profiles (id, full_name, role, phone, district, subcounty, is_admin, latitude, longitude)
 values ('99999999-9999-9999-9999-999999999999', 'Platform Admin', 'Admin', null, 'Mukono', 'Mukono Town', true, 0.353300, 32.755300);
+
+-- Close the general "tap to claim" mechanism for any admin-flagged row —
+-- anonymous or not, it must never work on an admin profile.
+drop policy if exists "claim profile" on profiles;
+create policy "claim profile" on profiles for update
+using (auth.uid() is not null and coalesce(is_admin, false) = false)
+with check (auth_id = auth.uid());
+
+-- One-time secure bootstrap: an admin row can only be linked while
+-- unclaimed (auth_id is null), and only by a REAL email/password session
+-- (never anonymous — checked via the is_anonymous claim in the JWT).
+create policy "bootstrap admin claim" on profiles for update
+using (coalesce(is_admin, false) = true and auth_id is null)
+with check (
+  auth_id = auth.uid()
+  and coalesce((auth.jwt() ->> 'is_anonymous')::boolean, false) = false
+);
 
 -- ---------- Storage ----------
 insert into storage.buckets (id, name, public) values ('farmlinker-media', 'farmlinker-media', true)

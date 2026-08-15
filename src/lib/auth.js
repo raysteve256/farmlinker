@@ -63,3 +63,57 @@ export async function createProfile({ full_name, role, phone, subcounty, latitud
 export function logout() {
   localStorage.removeItem(PROFILE_KEY)
 }
+
+// ---------- Real email/password auth, for the Admin account only ----------
+// Everything above (ensureSession/claimProfile) is the anonymous demo-login
+// flow, deliberately excluded from ever touching an is_admin row — see the
+// "bootstrap admin claim" RLS policy. This is the real, credentialed path.
+
+export async function adminSignUp(email, password) {
+  const { data, error } = await supabase.auth.signUp({ email, password })
+  if (error) throw error
+
+  if (!data.session) {
+    // Project requires email confirmation before a session is issued.
+    return { needsEmailConfirmation: true }
+  }
+  return linkSessionToAdminProfile()
+}
+
+export async function adminSignIn(email, password) {
+  const { error } = await supabase.auth.signInWithPassword({ email, password })
+  if (error) throw error
+  const { data: { session } } = await supabase.auth.getSession()
+  const { data: existing } = await supabase.from('profiles').select('*').eq('auth_id', session.user.id).eq('is_admin', true).maybeSingle()
+  if (existing) {
+    localStorage.setItem(PROFILE_KEY, existing.id)
+    return { profile: existing }
+  }
+  // First sign-in after confirming email — try the one-time bootstrap link.
+  return linkSessionToAdminProfile()
+}
+
+async function linkSessionToAdminProfile() {
+  const { data: { session } } = await supabase.auth.getSession()
+  const { data, error } = await supabase
+    .from('profiles')
+    .update({ auth_id: session.user.id })
+    .eq('is_admin', true)
+    .is('auth_id', null)
+    .select()
+    .maybeSingle()
+  if (error) throw error
+  if (!data) throw new Error('Admin access has already been set up by someone else, or no admin account is available to claim.')
+  localStorage.setItem(PROFILE_KEY, data.id)
+  return { profile: data }
+}
+
+export async function adminChangePassword(newPassword) {
+  const { error } = await supabase.auth.updateUser({ password: newPassword })
+  if (error) throw error
+}
+
+export async function adminLogout() {
+  localStorage.removeItem(PROFILE_KEY)
+  await supabase.auth.signOut()
+}
