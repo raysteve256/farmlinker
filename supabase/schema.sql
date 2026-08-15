@@ -296,6 +296,29 @@ with check (
   and coalesce((auth.jwt() ->> 'is_anonymous')::boolean, false) = false
 );
 
+-- ---------- Alternative credit-scoring (Trust Score) ----------
+-- Publicly callable, but exposes ONLY aggregate counts — never the
+-- underlying restricted rows (vet_requests.issue text, transactions.phone
+-- number, etc.) — so the public /verify page can show an accurate score
+-- for any farmer without leaking anything RLS is meant to protect.
+create or replace function get_trust_signals(target_profile_id uuid)
+returns table (
+  listings_count int,
+  transactions_count int,
+  vet_requests_total int,
+  vet_requests_resolved int,
+  posts_count int
+)
+language sql security definer stable
+set search_path = public as $$
+  select
+    (select count(*)::int from listings where farmer_id = target_profile_id),
+    (select count(*)::int from transactions where seller_id = target_profile_id),
+    (select count(*)::int from vet_requests where farmer_id = target_profile_id),
+    (select count(*)::int from vet_requests where farmer_id = target_profile_id and status = 'resolved'),
+    (select count(*)::int from posts where author_id = target_profile_id);
+$$;
+
 -- ---------- Storage ----------
 insert into storage.buckets (id, name, public) values ('farmlinker-media', 'farmlinker-media', true)
 on conflict (id) do nothing;

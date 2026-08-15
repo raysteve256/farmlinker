@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { getMyTransactions } from '../lib/payments'
+import TrustScoreCard from '../components/TrustScoreCard'
 
 function initials(name) { return (name || '?').split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase() }
 function fmtUGX(n) { return 'UGX ' + Number(n).toLocaleString() }
@@ -24,6 +25,10 @@ export default function Profile({ me, onLogout }) {
         <div className="account-info-row"><span>District</span><span>{me.district}</span></div>
         <div className="account-info-row"><span>Location</span><span>{me.subcounty || '—'}</span></div>
       </div>
+
+      {(me.role === 'Farmer' || me.role === 'Supplier') && (
+        <TrustScoreCard profileId={me.id} createdAt={me.created_at} />
+      )}
 
       {transactions.length > 0 && (
         <div className="card">

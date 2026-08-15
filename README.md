@@ -46,6 +46,13 @@ Profiles carry real latitude/longitude (captured via the browser's Geolocation A
 ## Mobile Money provision
 Every Marketplace listing and Supplier product has a **💰 Pay** button. Tapping it opens a real, working flow — commission split shown transparently (5%, matching the Business Model Canvas), phone number and provider (MTN/Airtel) captured, and a `transactions` row created in Supabase with `status: pending_integration`. **No money actually moves yet** — the modal says so plainly, and the request shows up under the buyer/seller's Profile as "🚧 Pending integration." This is the real integration point: once you have MTN/Airtel merchant API credentials, replacing `pending_integration` with an actual charge call is the only change needed — the data model, commission logic, and UI are already done.
 
+## Alternative credit-scoring (Trust Score)
+The AYuTe challenge area we're building against names "alternative credit-scoring... for farmers and small agribusinesses" directly — this closes that gap. Every Farmer/Supplier profile has a **Trust Score (0–100)**, computed live from real on-platform activity: account age, listings posted, completed payment requests as a seller, vet call-out follow-through, and community engagement. No formal credit history required — which is the point, since most smallholder farmers don't have one.
+
+It's visible two places: the farmer's own **Profile** (full breakdown, so they understand exactly what to do to raise it), and the **public `/verify/:stamp` page** (compact view) — so a buyer, or eventually a real lending partner, sees a real trust signal when they scan a listing's QR code, not just traceability.
+
+**Built correctly, not just for the logged-in user's own view:** two of the five signals (vet requests, transactions) live in tables that are normally restricted to the record's own participants. Rather than let the public verification page silently under-report a stranger's score (which would have been a real, subtle bug), the aggregate counts are served through a `SECURITY DEFINER` function (`get_trust_signals`) that returns only counts — never the underlying restricted rows (no phone numbers, no private issue text) — so the score is accurate for every viewer while nothing sensitive leaks.
+
 ## Admin console
 Logging in as the seeded **"Ssemambo Steven (Admin)"** account (role `Admin`) replaces the normal farmer-style UI entirely with a separate admin console:
 - **Dashboard** — platform-wide stats: users by role, active listings, open/urgent vet requests, disease alerts, messages sent, Mobile Money request volume and potential commission
@@ -58,9 +65,9 @@ Logging in as the seeded **"Ssemambo Steven (Admin)"** account (role `Admin`) re
 **Recommended manual step:** enable "Leaked Password Protection" in Supabase Dashboard → Authentication → Policies — checks new passwords against known-breached lists. Not something I can toggle remotely, same as the Anonymous Sign-ins setting.
 
 ## Known limitations (honest roadmap)
-- **No password/OTP auth yet** — see "How login works" above. Phone + OTP is the natural next step for this user base.
+- **No password/OTP auth for regular accounts** — see "How login works" above. Admin now has real credentials; everyone else is still the anonymous demo flow.
 - **Mobile Money is a provision, not a live payment rail** — see above. Needs real MTN/Airtel merchant API credentials before real charging can be built.
-- **No content moderation or trust/ratings system** — anyone with a session can post anything.
+- **Trust Score has no consumer of its own yet** — it's a real, accurate signal, but nothing currently *acts* on it (e.g., no lending partner integration, no "trusted seller" marketplace filter). That's the natural next step once the score itself has enough real activity behind it to be meaningful.
 - **Luganda toggle is decorative** — no translations behind it yet.
 
 ## Traceability

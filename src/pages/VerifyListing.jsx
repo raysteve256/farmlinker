@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { supabase } from '../supabaseClient'
+import TrustScoreCard from '../components/TrustScoreCard'
 
 function fmtUGX(n) { return 'UGX ' + Number(n).toLocaleString() }
 function fmtDate(iso) {
@@ -19,7 +20,7 @@ export default function VerifyListing() {
       setLoading(true)
       const { data, error } = await supabase
         .from('listings')
-        .select('*, profiles!listings_farmer_id_fkey(full_name, district, subcounty, phone)')
+        .select('*, profiles!listings_farmer_id_fkey(id, full_name, district, subcounty, phone, created_at)')
         .eq('trace_stamp', stamp)
         .maybeSingle()
       if (cancelled) return
@@ -82,6 +83,10 @@ export default function VerifyListing() {
               <div className="account-info-row"><span>Posted on</span><span>{fmtDate(listing.created_at)}</span></div>
               <div className="account-info-row"><span>Status</span><span style={{ textTransform: 'capitalize' }}>{listing.status}</span></div>
             </div>
+
+            {listing.profiles?.id && (
+              <TrustScoreCard profileId={listing.profiles.id} createdAt={listing.profiles.created_at} compact />
+            )}
 
             <p style={{ fontSize: 11.5, color: 'var(--muted)', textAlign: 'center', lineHeight: 1.6, marginTop: 10 }}>
               This page confirms the listing exists on Farm Linker's records as shown. It does not independently verify the physical condition or health of the birds/eggs.
