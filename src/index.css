@@ -46,7 +46,7 @@ p{margin:0;}
 .listing-title{font-family:'Fraunces',serif;font-weight:600;font-size:16.5px;margin-bottom:3px;}
 .listing-meta{font-size:12.5px;color:var(--muted);}
 .price-tag{font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:14px;color:var(--leaf-deep);white-space:nowrap;}
-.listing-row{display:flex;justify-content:space-between;align-items:center;margin-top:12px;}
+.listing-row{display:flex;justify-content:space-between;align-items:center;margin-top:12px;flex-wrap:wrap;gap:8px;}
 .badge{display:inline-flex;align-items:center;gap:5px;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.05em;padding:5px 9px;border-radius:20px;}
 .badge.trace{border:1.3px dashed var(--leaf-deep);color:var(--leaf-deep);transform:rotate(-2deg);}
 .badge.urgent{background:var(--clay);color:#fff;}

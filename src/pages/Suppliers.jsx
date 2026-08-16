@@ -78,6 +78,9 @@ export default function Suppliers({ me, suppliers, onAdd, onContact, modalOpen, 
             </div>
             <div className="listing-row">
               <span className="district-chip">📍 {s.location}{s._km !== null && s._km !== undefined ? ` · ${fmtDistance(s._km)}` : ''}</span>
+            </div>
+            <div className="listing-row">
+              <span></span>
               {mine ? <span className="badge mine">YOURS</span> : (
                 <div style={{ display: 'flex', gap: 8 }}>
                   <button className="ghost-btn" onClick={() => setPayItem(s)}>💰 Pay</button>
