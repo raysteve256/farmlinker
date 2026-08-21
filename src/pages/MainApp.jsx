@@ -83,7 +83,7 @@ export default function MainApp() {
 
   async function handleLogout() {
     if (me?.role === 'Admin') await adminLogout()
-    else authLogout()
+    else await authLogout()
     setMe(null)
     setScreen('home')
   }

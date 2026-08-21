@@ -60,8 +60,16 @@ export async function createProfile({ full_name, role, phone, subcounty, latitud
   return data
 }
 
-export function logout() {
+// Ends the anonymous session entirely, not just the local pointer to it.
+// Without this, switching between demo accounts in the same browser would
+// try to reattach the same lingering anonymous session (still linked to
+// the previous account) to a different profile row — and since auth_id
+// is unique, that fails with "duplicate key value violates unique
+// constraint profiles_auth_id_key" on every account except the first one
+// ever claimed in that browser.
+export async function logout() {
   localStorage.removeItem(PROFILE_KEY)
+  await supabase.auth.signOut()
 }
 
 // ---------- Real email/password auth, for the Admin account only ----------
