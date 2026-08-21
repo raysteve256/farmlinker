@@ -67,9 +67,19 @@ export async function createProfile({ full_name, role, phone, subcounty, latitud
 // is unique, that fails with "duplicate key value violates unique
 // constraint profiles_auth_id_key" on every account except the first one
 // ever claimed in that browser.
+//
+// Deliberately swallows any signOut() error (e.g. calling it again on an
+// already-cleared session) so a redundant/failed call can never prevent
+// the caller from clearing local state and returning to the login
+// screen — the local pointer removal below is what actually matters for
+// the UI, signOut() is best-effort cleanup on top of that.
 export async function logout() {
   localStorage.removeItem(PROFILE_KEY)
-  await supabase.auth.signOut()
+  try {
+    await supabase.auth.signOut()
+  } catch (e) {
+    console.warn('signOut during logout failed (non-fatal):', e)
+  }
 }
 
 // ---------- Real email/password auth, for the Admin account only ----------
@@ -123,5 +133,9 @@ export async function adminChangePassword(newPassword) {
 
 export async function adminLogout() {
   localStorage.removeItem(PROFILE_KEY)
-  await supabase.auth.signOut()
+  try {
+    await supabase.auth.signOut()
+  } catch (e) {
+    console.warn('signOut during adminLogout failed (non-fatal):', e)
+  }
 }

@@ -43,6 +43,7 @@ export default function MainApp() {
 
   const toastRef = useRef(null)
   const toast = (msg) => toastRef.current?.fire(msg)
+  const loggingOutRef = useRef(false)
 
   useEffect(() => {
     getMyProfile().then(p => { setMe(p); setCheckingSession(false) })
@@ -82,10 +83,16 @@ export default function MainApp() {
   }
 
   async function handleLogout() {
-    if (me?.role === 'Admin') await adminLogout()
-    else await authLogout()
-    setMe(null)
-    setScreen('home')
+    if (loggingOutRef.current) return // already in progress — ignore duplicate/rapid clicks
+    loggingOutRef.current = true
+    try {
+      if (me?.role === 'Admin') await adminLogout()
+      else await authLogout()
+    } finally {
+      setMe(null)
+      setScreen('home')
+      loggingOutRef.current = false
+    }
   }
 
   async function handleAddListing(payload) {
